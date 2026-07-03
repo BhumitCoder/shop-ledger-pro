@@ -1,10 +1,14 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { AppBar, Box, BottomNavigation, BottomNavigationAction, Container, IconButton, Paper, Toolbar, Typography } from "@mui/material";
+import {
+  AppBar, Box, BottomNavigation, BottomNavigationAction,
+  Container, IconButton, Paper, Toolbar, Typography,
+} from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SearchIcon from "@mui/icons-material/Search";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { useThemeMode } from "@/theme/ThemeModeProvider";
@@ -12,7 +16,7 @@ import { useThemeMode } from "@/theme/ThemeModeProvider";
 const tabs = [
   { to: "/", label: "Home", icon: <DashboardIcon /> },
   { to: "/customers", label: "Customers", icon: <PeopleIcon /> },
-  { to: "/transactions", label: "Entries", icon: <ReceiptLongIcon /> },
+  { to: "/expenses", label: "Expenses", icon: <AccountBalanceWalletIcon /> },
   { to: "/reports", label: "Reports", icon: <AssessmentIcon /> },
   { to: "/settings", label: "Settings", icon: <SettingsIcon /> },
 ];
@@ -25,10 +29,10 @@ export default function AppLayout() {
   const currentTab = (() => {
     if (loc.pathname === "/") return 0;
     if (loc.pathname.startsWith("/customers")) return 1;
-    if (loc.pathname.startsWith("/transactions")) return 2;
+    if (loc.pathname.startsWith("/expenses")) return 2;
     if (loc.pathname.startsWith("/reports")) return 3;
     if (loc.pathname.startsWith("/settings")) return 4;
-    return 0;
+    return false;
   })();
 
   return (
@@ -38,6 +42,9 @@ export default function AppLayout() {
           <Typography variant="h6" sx={{ flex: 1, fontWeight: 800 }}>
             Khata Book
           </Typography>
+          <IconButton color="inherit" onClick={() => nav("/search")} aria-label="search">
+            <SearchIcon />
+          </IconButton>
           <IconButton color="inherit" onClick={toggle} aria-label="toggle theme">
             {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>

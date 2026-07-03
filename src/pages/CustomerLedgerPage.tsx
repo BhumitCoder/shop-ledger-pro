@@ -1,28 +1,41 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Avatar, Box, Button, Card, CardContent, Chip, Divider, IconButton, Menu, MenuItem, Stack, Typography } from "@mui/material";
+import {
+  Avatar, Box, Button, Card, CardContent, Chip, CircularProgress,
+  Divider, IconButton, Menu, MenuItem, Skeleton, Stack, Typography,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CallIcon from "@mui/icons-material/Call";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import { useAuth } from "@/providers/AuthProvider";
-import { Customer, Transaction, computeBalance, customerDoc, deleteCustomer, deleteTransaction, subscribeTransactions } from "@/lib/db";
+import {
+  Customer, Transaction, computeBalance, customerDoc,
+  deleteCustomer, deleteTransaction, subscribeTransactions,
+} from "@/lib/db";
 import { onSnapshot } from "firebase/firestore";
 import { fmtDate, fmtMoney } from "@/lib/format";
 import { TransactionFormDialog } from "@/components/TransactionFormDialog";
 import { CustomerFormDialog } from "@/components/CustomerFormDialog";
 import { useSnackbar } from "notistack";
+import { uploadCustomerPhoto } from "@/lib/storage";
 
 export default function CustomerLedgerPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const nav = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const photoRef = useRef<HTMLInputElement>(null);
+
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [txns, setTxns] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [txnType, setTxnType] = useState<"credit" | "payment" | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [menu, setMenu] = useState<null | HTMLElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     if (!user || !id) return;
@@ -34,117 +47,255 @@ export default function CustomerLedgerPage() {
 
   useEffect(() => {
     if (!user || !id) return;
-    return subscribeTransactions(user.uid, id, setTxns);
+    setLoading(true);
+    return subscribeTransactions(user.uid, id, (rows) => { setTxns(rows); setLoading(false); });
   }, [user, id]);
 
   const balance = useMemo(() => computeBalance(customer?.openingBalance || 0, txns), [customer, txns]);
   const totalCredit = txns.filter((t) => t.type === "credit").reduce((a, b) => a + b.amount, 0);
   const totalPaid = txns.filter((t) => t.type === "payment").reduce((a, b) => a + b.amount, 0);
 
-  // Build running balance (oldest -> newest)
   const rows = useMemo(() => {
     const ordered = [...txns].sort((a, b) => a.date.toMillis() - b.date.toMillis());
     let run = customer?.openingBalance || 0;
-    const withRun = ordered.map((t) => {
-      run += t.type === "credit" ? t.amount : -t.amount;
-      return { ...t, running: run };
-    });
-    return withRun.reverse();
+    return ordered.map((t) => { run += t.type === "credit" ? t.amount : -t.amount; return { ...t, running: run }; }).reverse();
   }, [txns, customer]);
-
-  if (!customer) return null;
 
   const handleDelete = async () => {
     if (!user) return;
-    if (!confirm(`Delete ${customer.name} and all their entries? This cannot be undone.`)) return;
+    if (!confirm(`Delete ${customer?.name} and all their entries? This cannot be undone.`)) return;
     try {
-      await deleteCustomer(user.uid, customer.id);
+      await deleteCustomer(user.uid, customer!.id);
       enqueueSnackbar("Customer deleted", { variant: "success" });
       nav("/customers", { replace: true });
     } catch (e: any) { enqueueSnackbar(e?.message || "Delete failed", { variant: "error" }); }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !customer) return;
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadCustomerPhoto(user.uid, customer.id, file);
+      const { updateCustomer } = await import("@/lib/db");
+      await updateCustomer(user.uid, customer.id, { photoURL: url });
+      enqueueSnackbar("Photo updated!", { variant: "success" });
+    } catch (e: any) {
+      enqueueSnackbar(e?.message || "Upload failed", { variant: "error" });
+    } finally {
+      setUploadingPhoto(false);
+      if (photoRef.current) photoRef.current.value = "";
+    }
+  };
+
+  const printLedger = () => {
+    if (!customer) return;
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ledger — ${customer.name}</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 24px; color: #111; font-size: 13px; }
+  h1 { color: #1976d2; margin-bottom: 4px; }
+  .subtitle { color: #666; margin-bottom: 16px; font-size: 12px; }
+  .summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: #f5f5f5; padding: 10px 16px; border-radius: 8px; }
+  .stat-label { font-size: 11px; color: #666; }
+  .stat-value { font-size: 18px; font-weight: 800; margin-top: 2px; }
+  .green { color: #2e7d32; } .red { color: #c62828; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th { background: #1976d2; color: white; padding: 8px; text-align: left; font-size: 12px; }
+  td { padding: 7px 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+  tr:nth-child(even) { background: #fafafa; }
+  @media print { body { margin: 12px; } }
+</style>
+</head>
+<body>
+<h1>Customer Ledger</h1>
+<div class="subtitle">
+  Customer: <strong>${customer.name}</strong>
+  ${customer.phone ? ` &nbsp;·&nbsp; Phone: ${customer.phone}` : ""}
+  &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString("en-IN")}
+</div>
+<div class="summary">
+  <div class="stat">
+    <div class="stat-label">Balance</div>
+    <div class="stat-value ${balance > 0 ? "green" : balance < 0 ? "red" : ""}">
+      ${balance === 0 ? "Settled" : (balance > 0 ? "Will Get " : "Will Give ") + "₹" + Math.abs(balance).toLocaleString("en-IN")}
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Total Credit</div>
+    <div class="stat-value red">₹${totalCredit.toLocaleString("en-IN")}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Total Paid</div>
+    <div class="stat-value green">₹${totalPaid.toLocaleString("en-IN")}</div>
+  </div>
+</div>
+<table>
+  <tr><th>Date</th><th>Details</th><th>Method</th><th>Credit (You Gave)</th><th>Payment (You Got)</th><th>Balance</th></tr>
+  ${rows.map((t) => `
+  <tr>
+    <td>${fmtDate(t.date)}</td>
+    <td>${t.description || (t.type === "credit" ? "Credit given" : "Payment received")}</td>
+    <td>${t.paymentMethod || "cash"}</td>
+    <td style="color:#c62828">${t.type === "credit" ? "₹" + t.amount.toLocaleString("en-IN") : ""}</td>
+    <td style="color:#2e7d32">${t.type === "payment" ? "₹" + t.amount.toLocaleString("en-IN") : ""}</td>
+    <td><strong>₹${Math.abs((t as any).running).toLocaleString("en-IN")} ${(t as any).running > 0 ? "Dr" : (t as any).running < 0 ? "Cr" : ""}</strong></td>
+  </tr>`).join("")}
+</table>
+</body>
+</html>`;
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); win.print(); }
+  };
+
+  if (!customer) {
+    return (
+      <Stack spacing={2}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={40} height={40} />
+          <Box flex={1}><Skeleton width="60%" /><Skeleton width="40%" /></Box>
+        </Stack>
+        <Skeleton variant="rounded" height={100} />
+        {[1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={80} />)}
+      </Stack>
+    );
+  }
+
   return (
     <Stack spacing={2}>
+      {/* Header */}
       <Stack direction="row" alignItems="center" spacing={1}>
         <IconButton onClick={() => nav(-1)}><ArrowBackIcon /></IconButton>
-        <Avatar sx={{ bgcolor: "primary.main" }}>{customer.name[0]?.toUpperCase()}</Avatar>
+        <Box sx={{ position: "relative", cursor: "pointer" }} onClick={() => photoRef.current?.click()}>
+          <Avatar
+            src={customer.photoURL}
+            sx={{ bgcolor: "primary.main", width: 44, height: 44 }}
+          >
+            {customer.name[0]?.toUpperCase()}
+          </Avatar>
+          {uploadingPhoto ? (
+            <CircularProgress size={16} sx={{ position: "absolute", bottom: -2, right: -2 }} />
+          ) : (
+            <Box sx={{ position: "absolute", bottom: -2, right: -2, bgcolor: "white", borderRadius: "50%", p: "1px" }}>
+              <PhotoCameraIcon sx={{ fontSize: 12, color: "text.secondary" }} />
+            </Box>
+          )}
+        </Box>
+        <input ref={photoRef} type="file" accept="image/*" hidden onChange={handlePhotoUpload} />
         <Box flex={1} minWidth={0}>
           <Typography fontWeight={700} noWrap>{customer.name}</Typography>
           <Typography variant="caption" color="text.secondary">{customer.phone || "No phone"}</Typography>
         </Box>
         {customer.phone && (
           <>
-            <IconButton color="primary" component="a" href={`tel:${customer.phone}`} aria-label="call"><CallIcon /></IconButton>
-            <IconButton sx={{ color: "#25D366" }} component="a" href={`https://wa.me/${customer.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener" aria-label="whatsapp"><WhatsAppIcon /></IconButton>
+            <IconButton color="primary" component="a" href={`tel:${customer.phone}`}><CallIcon /></IconButton>
+            <IconButton sx={{ color: "#25D366" }} component="a" href={`https://wa.me/${customer.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener"><WhatsAppIcon /></IconButton>
           </>
         )}
         <IconButton onClick={(e) => setMenu(e.currentTarget)}><MoreVertIcon /></IconButton>
         <Menu open={!!menu} anchorEl={menu} onClose={() => setMenu(null)}>
           <MenuItem onClick={() => { setEditOpen(true); setMenu(null); }}>Edit customer</MenuItem>
+          <MenuItem onClick={() => { setMenu(null); printLedger(); }}><PictureAsPdfIcon fontSize="small" sx={{ mr: 1 }} />Print / PDF Ledger</MenuItem>
           <MenuItem onClick={() => { setMenu(null); handleDelete(); }} sx={{ color: "error.main" }}>Delete customer</MenuItem>
         </Menu>
       </Stack>
 
-      <Card sx={{ background: balance > 0 ? "linear-gradient(135deg,#2e7d32,#43a047)" : balance < 0 ? "linear-gradient(135deg,#c62828,#e53935)" : "linear-gradient(135deg,#546e7a,#78909c)", color: "white" }}>
+      {/* Balance card */}
+      <Card sx={{
+        background: balance > 0
+          ? "linear-gradient(135deg,#2e7d32,#43a047)"
+          : balance < 0
+          ? "linear-gradient(135deg,#c62828,#e53935)"
+          : "linear-gradient(135deg,#546e7a,#78909c)",
+        color: "white",
+      }}>
         <CardContent>
-          <Typography variant="body2" sx={{ opacity: 0.9 }}>{balance > 0 ? "You will get" : balance < 0 ? "You will give" : "All settled"}</Typography>
-          <Typography variant="h4" fontWeight={800}>{fmtMoney(balance)}</Typography>
-          <Stack direction="row" spacing={1} mt={1}>
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            {balance > 0 ? "You will get" : balance < 0 ? "You will give" : "All settled"}
+          </Typography>
+          <Typography variant="h4" fontWeight={800}>{fmtMoney(Math.abs(balance))}</Typography>
+          <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
             <Chip size="small" label={`Credit ${fmtMoney(totalCredit)}`} sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "white" }} />
             <Chip size="small" label={`Paid ${fmtMoney(totalPaid)}`} sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "white" }} />
           </Stack>
         </CardContent>
       </Card>
 
-      <Typography variant="subtitle1" fontWeight={700}>Ledger</Typography>
-      <Stack spacing={1}>
-        {rows.length === 0 && (
-          <Card><CardContent><Typography color="text.secondary" textAlign="center">No entries yet. Add one below.</Typography></CardContent></Card>
-        )}
-        {rows.map((t) => (
-          <Card key={t.id}>
-            <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                <Box>
-                  <Typography fontWeight={600}>{t.description || (t.type === "credit" ? "Credit given" : "Payment received")}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {fmtDate(t.date)} · {t.paymentMethod || "cash"}
-                  </Typography>
-                </Box>
-                <Box textAlign="right">
-                  <Typography fontWeight={700} color={t.type === "credit" ? "error.main" : "success.main"}>
-                    {t.type === "credit" ? "+" : "-"}{fmtMoney(t.amount)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">Bal {fmtMoney((t as any).running)}</Typography>
-                </Box>
-              </Stack>
-              <Divider sx={{ my: 1 }} />
-              <Button size="small" color="error" onClick={async () => {
-                if (!user) return;
-                if (!confirm("Delete this entry?")) return;
-                try { await deleteTransaction(user.uid, customer.id, t.id); enqueueSnackbar("Entry deleted", { variant: "success" }); }
-                catch (e: any) { enqueueSnackbar(e?.message, { variant: "error" }); }
-              }}>Delete</Button>
-            </CardContent>
-          </Card>
-        ))}
-      </Stack>
+      {/* PDF share button */}
+      <Button
+        variant="outlined"
+        startIcon={<PictureAsPdfIcon />}
+        onClick={printLedger}
+        size="small"
+      >
+        Share / Print Ledger
+      </Button>
 
-      {/* Fixed bottom action bar */}
+      <Typography variant="subtitle1" fontWeight={700}>Ledger</Typography>
+
+      {/* Transactions */}
+      {loading ? (
+        <Stack spacing={1}>{[1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={88} />)}</Stack>
+      ) : (
+        <Stack spacing={1}>
+          {rows.length === 0 && (
+            <Card><CardContent>
+              <Typography color="text.secondary" textAlign="center">No entries yet. Use the buttons below to add credit or payment.</Typography>
+            </CardContent></Card>
+          )}
+          {rows.map((t) => (
+            <Card key={t.id}>
+              <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                  <Box flex={1} minWidth={0} pr={1}>
+                    <Typography fontWeight={600} noWrap>
+                      {t.description || (t.type === "credit" ? "Credit given" : "Payment received")}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {fmtDate(t.date)} · {t.paymentMethod || "cash"}
+                    </Typography>
+                  </Box>
+                  <Box textAlign="right">
+                    <Typography fontWeight={700} color={t.type === "credit" ? "error.main" : "success.main"}>
+                      {t.type === "credit" ? "+" : "−"}{fmtMoney(t.amount)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Bal {fmtMoney(Math.abs((t as any).running))}</Typography>
+                  </Box>
+                </Stack>
+                {t.receiptUrl && (
+                  <Box mt={1}>
+                    <img src={t.receiptUrl} alt="receipt" style={{ maxWidth: "100%", maxHeight: 120, borderRadius: 6, objectFit: "cover" }} />
+                  </Box>
+                )}
+                <Divider sx={{ my: 1 }} />
+                <Button size="small" color="error" onClick={async () => {
+                  if (!user || !confirm("Delete this entry?")) return;
+                  try { await deleteTransaction(user.uid, customer.id, t.id); enqueueSnackbar("Entry deleted", { variant: "success" }); }
+                  catch (e: any) { enqueueSnackbar(e?.message, { variant: "error" }); }
+                }}>Delete</Button>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      )}
+
+      {/* Fixed bottom bar */}
       <Box sx={{ position: "fixed", left: 0, right: 0, bottom: 68, zIndex: 15, p: 1.5, bgcolor: "background.paper", borderTop: 1, borderColor: "divider" }}>
         <Stack direction="row" spacing={1} maxWidth="sm" mx="auto">
-          <Button fullWidth size="large" variant="contained" color="error" onClick={() => setTxnType("credit")}>You gave ₹</Button>
-          <Button fullWidth size="large" variant="contained" color="success" onClick={() => setTxnType("payment")}>You got ₹</Button>
+          <Button fullWidth size="large" variant="contained" color="error" onClick={() => setTxnType("credit")}>
+            You gave ₹
+          </Button>
+          <Button fullWidth size="large" variant="contained" color="success" onClick={() => setTxnType("payment")}>
+            You got ₹
+          </Button>
         </Stack>
       </Box>
 
-      <TransactionFormDialog
-        open={!!txnType}
-        onClose={() => setTxnType(null)}
-        customerId={customer.id}
-        type={txnType || "credit"}
-      />
+      <TransactionFormDialog open={!!txnType} onClose={() => setTxnType(null)} customerId={customer.id} type={txnType || "credit"} />
       <CustomerFormDialog open={editOpen} onClose={() => setEditOpen(false)} customer={customer} />
     </Stack>
   );

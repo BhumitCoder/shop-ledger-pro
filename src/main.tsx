@@ -12,6 +12,12 @@ const qc = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, staleTime: 30_000 } },
 });
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeModeProvider>

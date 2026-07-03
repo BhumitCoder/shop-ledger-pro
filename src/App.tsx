@@ -10,6 +10,8 @@ import CustomerLedgerPage from "./pages/CustomerLedgerPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import ExpensesPage from "./pages/ExpensesPage";
+import SearchPage from "./pages/SearchPage";
 import { ReactNode } from "react";
 
 function Private({ children }: { children: ReactNode }) {
@@ -34,6 +36,8 @@ export default function App() {
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/customers/:id" element={<CustomerLedgerPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />
+        <Route path="/expenses" element={<ExpensesPage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
