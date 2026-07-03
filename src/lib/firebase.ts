@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { Firestore, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDInBeT_ytLjhkRv_J3rtagRXUdY4WfEds",
@@ -14,16 +14,16 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 
-// Firestore with offline persistence
-let db;
+// Firestore with offline persistence (falls back to memory cache if it fails)
+let _db: Firestore;
 try {
-  db = initializeFirestore(app, {
+  _db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
   });
 } catch {
-  db = getFirestore(app);
+  _db = getFirestore(app);
 }
-export { db };
+export const db: Firestore = _db;
 
 export const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch(() => {});
