@@ -19,9 +19,9 @@ let _db: Firestore;
 try {
   _db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-  });
+  }, "teligramboat");
 } catch {
-  _db = getFirestore(app);
+  _db = getFirestore(app, "teligramboat");
 }
 export const db: Firestore = _db;
 
