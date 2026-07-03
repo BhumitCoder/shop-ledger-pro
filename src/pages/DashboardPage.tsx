@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, Chip, Grid, Stack, Typography, Box } from "@mui/material";
+import { Card, CardContent, Chip, Stack, Typography, Box } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import PeopleIcon from "@mui/icons-material/People";
 import { useAuth } from "@/providers/AuthProvider";
 import { subscribeCustomers, Customer, Transaction, txnsRef } from "@/lib/db";
 import { fmtMoney, startOfDay, endOfDay } from "@/lib/format";
-import { getDocs, query, where, Timestamp } from "firebase/firestore";
+import { getDocs, Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 function StatCard({ label, value, color, icon }: { label: string; value: string; color: string; icon?: React.ReactNode }) {
