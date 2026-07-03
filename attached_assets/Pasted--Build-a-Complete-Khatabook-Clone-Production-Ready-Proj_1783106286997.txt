@@ -1,0 +1,706 @@
+# Build a Complete Khatabook Clone (Production Ready)
+
+## Project Goal
+
+Create a modern, professional, mobile-first accounting application similar to Khatabook.
+
+The application is for small shop owners, wholesalers, retailers, manufacturers, and business owners who are not highly educated. The UI must be extremely simple, easy to understand, fast, and require as few taps as possible.
+
+The design should feel very close to Khatabook while using original code and assets.
+
+---
+
+# Technology Stack
+
+Frontend
+
+* React
+* Vite
+* TypeScript
+* Material UI (MUI)
+* React Router
+* React Hook Form
+* React Query (TanStack Query)
+* Firebase SDK
+
+Backend
+
+* Firebase Authentication
+* Firestore Database
+* Firebase Storage
+* Firebase Cloud Functions (if required)
+* Firebase Hosting
+
+Other
+
+* Progressive Web App (PWA)
+* Installable App
+* Offline Support
+* Responsive Mobile First
+* Dark Mode
+* Light Mode
+
+---
+
+# Authentication
+
+Use Firebase Authentication only.
+
+Support:
+
+* Email & Password Login
+* Register
+* Forgot Password
+* Email Verification
+* Persistent Login
+* Logout
+
+No OTP.
+No Phone Authentication.
+
+---
+
+# Mobile First Design
+
+The application will mainly be used on Android mobile devices.
+
+Requirements
+
+* Thumb-friendly UI
+* Large buttons
+* Large fonts
+* High contrast
+* One-handed navigation
+* Bottom Navigation
+* Smooth animations
+* Fast loading
+* Touch optimized
+* Works perfectly from 320px width
+
+---
+
+# Dashboard
+
+Show
+
+Today's Collection
+
+Today's Payment
+
+Total Customers
+
+Money to Receive
+
+Money to Pay
+
+Today's Profit
+
+Monthly Profit
+
+Pending Entries
+
+Recent Transactions
+
+Quick Actions
+
+* Customer
+
+* Credit
+
+* Payment
+
+* Expense
+
+* Income
+
+Reports
+
+---
+
+# Customer Management
+
+Customer List
+
+Search Customer
+
+Create Customer
+
+Edit Customer
+
+Delete Customer
+
+Customer Details
+
+Customer Photo
+
+Phone Number
+
+Address
+
+Notes
+
+Opening Balance
+
+Customer Status
+
+Customer Ledger
+
+Running Balance
+
+---
+
+# Ledger
+
+Every customer should have their own ledger.
+
+Ledger should display
+
+Date
+
+Description
+
+Credit
+
+Debit
+
+Balance
+
+Running Balance
+
+Payment Status
+
+Attachment
+
+Notes
+
+---
+
+# Transactions
+
+Add Credit
+
+Add Payment
+
+Add Expense
+
+Add Income
+
+Edit Transaction
+
+Delete Transaction
+
+Duplicate Transaction
+
+Add Note
+
+Attach Image
+
+Voice Note
+
+Receipt Photo
+
+Transaction Categories
+
+Cash
+
+UPI
+
+Bank
+
+Cheque
+
+Card
+
+Other
+
+---
+
+# Smart Search
+
+Global Search
+
+Search by
+
+Customer Name
+
+Phone
+
+Amount
+
+Date
+
+Transaction ID
+
+Description
+
+Category
+
+Payment Type
+
+Invoice Number
+
+Results should appear instantly while typing.
+
+---
+
+# Reports
+
+Daily Report
+
+Weekly Report
+
+Monthly Report
+
+Yearly Report
+
+Custom Date Report
+
+Customer Report
+
+Income Report
+
+Expense Report
+
+Outstanding Report
+
+Cash Flow Report
+
+Profit Report
+
+Payment Method Report
+
+Download PDF
+
+Download Excel
+
+Print
+
+---
+
+# Notifications
+
+Due Payment Reminder
+
+Pending Amount
+
+Daily Reminder
+
+Monthly Summary
+
+Upcoming Due
+
+---
+
+# Settings
+
+Business Name
+
+Business Logo
+
+Owner Name
+
+Phone
+
+Email
+
+Address
+
+Currency
+
+Date Format
+
+Language
+
+Dark Mode
+
+Backup
+
+Restore
+
+Export
+
+Import
+
+Delete Account
+
+Privacy
+
+Terms
+
+---
+
+# Export / Import
+
+Export
+
+CSV
+
+Excel
+
+JSON
+
+PDF
+
+Backup Firestore
+
+Import
+
+CSV
+
+Excel
+
+JSON
+
+Merge Existing Data
+
+Replace Existing Data
+
+---
+
+# Offline Mode
+
+Application should work offline.
+
+Firestore Offline Persistence
+
+Auto Sync
+
+Pending Queue
+
+Conflict Resolution
+
+Last Sync Time
+
+---
+
+# PWA
+
+Installable
+
+Works Offline
+
+Add to Home Screen
+
+App Icon
+
+Splash Screen
+
+Manifest
+
+Service Worker
+
+Background Sync
+
+Cache Strategy
+
+Fast Loading
+
+---
+
+# Firebase Database Structure
+
+users
+
+userId
+
+businessInfo
+
+customers
+
+transactions
+
+expenses
+
+income
+
+settings
+
+notifications
+
+backups
+
+Each user can only access their own data.
+
+Implement Firestore Security Rules.
+
+---
+
+# Security
+
+Firestore Rules
+
+Authentication Required
+
+Data Isolation
+
+Validation
+
+Rate Limiting
+
+No Unauthorized Access
+
+Secure Storage Rules
+
+---
+
+# Customer Ledger Screen
+
+Top Card
+
+Customer Name
+
+Outstanding Amount
+
+Total Credit
+
+Total Paid
+
+Opening Balance
+
+Quick Buttons
+
+Add Credit
+
+Receive Payment
+
+Call Customer
+
+WhatsApp Customer
+
+Transaction History
+
+---
+
+# Add Transaction Screen
+
+Customer
+
+Amount
+
+Credit / Debit
+
+Payment Method
+
+Category
+
+Description
+
+Date
+
+Attachment
+
+Voice Note
+
+Save
+
+Cancel
+
+---
+
+# Expenses Module
+
+Add Expense
+
+Expense Category
+
+Expense Photo
+
+Vendor
+
+Amount
+
+Date
+
+Search
+
+Reports
+
+---
+
+# Income Module
+
+Add Income
+
+Category
+
+Source
+
+Amount
+
+Date
+
+Attachment
+
+Reports
+
+---
+
+# UI Requirements
+
+Very clean interface.
+
+Large typography.
+
+Rounded cards.
+
+Material Design 3.
+
+Smooth animations.
+
+Professional colors.
+
+Minimal screens.
+
+Simple language.
+
+No technical terms.
+
+Easy for non-educated users.
+
+Very few clicks.
+
+Large floating action button.
+
+Bottom Navigation
+
+Dashboard
+
+Customers
+
+Transactions
+
+Reports
+
+Settings
+
+---
+
+# Smart Features
+
+Recent Customers
+
+Favorite Customers
+
+Quick Payment
+
+Recent Amount Suggestions
+
+Auto Complete
+
+Voice Search
+
+Duplicate Detection
+
+Instant Balance Calculation
+
+Undo Delete
+
+Infinite Scroll
+
+Pagination
+
+Skeleton Loading
+
+Empty States
+
+Error States
+
+Success Animation
+
+---
+
+# Data Validation
+
+Required Fields
+
+Phone Validation
+
+Positive Amount Validation
+
+Duplicate Customer Detection
+
+Input Sanitization
+
+---
+
+# Performance
+
+Lazy Loading
+
+Code Splitting
+
+Image Optimization
+
+Firestore Pagination
+
+Memoization
+
+Fast Search
+
+Offline Cache
+
+---
+
+# Accessibility
+
+Large Touch Targets
+
+Screen Reader Support
+
+Keyboard Navigation
+
+Color Contrast
+
+Responsive Layout
+
+---
+
+# Theme
+
+Professional
+
+Minimal
+
+Blue + White
+
+Material UI Design
+
+Rounded Components
+
+Shadow Cards
+
+Clean Typography
+
+Simple Icons
+
+Professional Dashboard
+
+---
+
+# Final Requirements
+
+Write production-quality code.
+
+Use reusable components.
+
+Follow clean architecture.
+
+Use custom hooks.
+
+Use TypeScript everywhere.
+
+Use Firebase best practices.
+
+Use Firestore transactions where necessary.
+
+Use proper error handling.
+
+Use loading states.
+
+Use toast notifications.
+
+Create a scalable folder structure.
+
+Generate clean, maintainable code with comments where necessary.
+
+The final application should look and feel like a premium business accounting app similar to Khatabook while maintaining original implementation. It should be extremely simple for shop owners with little technical knowledge, highly optimized for mobile devices, fully responsive, installable as a PWA, and powered entirely by Firebase Authentication and Firestore.
