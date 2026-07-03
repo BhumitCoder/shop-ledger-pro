@@ -78,13 +78,15 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 6 }}><StatCard label="You will get" value={fmtMoney(toReceive)} color="success.main" icon={<ArrowDownwardIcon color="success" fontSize="small" />} /></Grid>
-        <Grid size={{ xs: 6 }}><StatCard label="You will give" value={fmtMoney(toPay)} color="error.main" icon={<ArrowUpwardIcon color="error" fontSize="small" />} /></Grid>
-        <Grid size={{ xs: 6 }}><StatCard label="Today collected" value={fmtMoney(today.collection)} color="success.main" /></Grid>
-        <Grid size={{ xs: 6 }}><StatCard label="Today given" value={fmtMoney(today.given)} color="error.main" /></Grid>
-        <Grid size={{ xs: 12 }}><StatCard label="Total customers" value={String(customers.length)} color="text.primary" icon={<PeopleIcon fontSize="small" />} /></Grid>
-      </Grid>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <StatCard label="You will get" value={fmtMoney(toReceive)} color="success.main" icon={<ArrowDownwardIcon color="success" fontSize="small" />} />
+        <StatCard label="You will give" value={fmtMoney(toPay)} color="error.main" icon={<ArrowUpwardIcon color="error" fontSize="small" />} />
+        <StatCard label="Today collected" value={fmtMoney(today.collection)} color="success.main" />
+        <StatCard label="Today given" value={fmtMoney(today.given)} color="error.main" />
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <StatCard label="Total customers" value={String(customers.length)} color="text.primary" icon={<PeopleIcon fontSize="small" />} />
+        </Box>
+      </Box>
 
       <Box>
         <Typography variant="subtitle1" fontWeight={700} mb={1}>Recent customers</Typography>
