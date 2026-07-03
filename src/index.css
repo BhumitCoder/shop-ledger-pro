@@ -1,0 +1,4 @@
+html, body, #root { height: 100%; margin: 0; }
+body { font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+input, textarea { font-family: inherit; }
