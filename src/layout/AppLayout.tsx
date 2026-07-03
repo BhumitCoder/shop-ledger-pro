@@ -36,29 +36,49 @@ export default function AppLayout() {
   })();
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
-      <AppBar position="sticky" color="primary" elevation={0}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flex: 1, fontWeight: 800 }}>
+    <Box sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
+      <AppBar position="sticky" color="primary" elevation={0} sx={{ pt: "env(safe-area-inset-top)" }}>
+        <Toolbar sx={{ minHeight: 56 }}>
+          <Typography variant="h6" sx={{ flex: 1, fontWeight: 800, letterSpacing: 0.3 }}>
             Khata Book
           </Typography>
-          <IconButton color="inherit" onClick={() => nav("/search")} aria-label="search">
+          <IconButton color="inherit" onClick={() => nav("/search")} aria-label="search" size="large">
             <SearchIcon />
           </IconButton>
-          <IconButton color="inherit" onClick={toggle} aria-label="toggle theme">
+          <IconButton color="inherit" onClick={toggle} aria-label="toggle theme" size="large">
             {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="sm" sx={{ flex: 1, py: 2, pb: 12 }}>
+
+      <Container
+        maxWidth="sm"
+        sx={{
+          flex: 1,
+          py: 1.5,
+          px: { xs: 1.5, sm: 2 },
+          pb: "calc(80px + env(safe-area-inset-bottom))",
+        }}
+      >
         <Outlet />
       </Container>
-      <Paper sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 10 }} elevation={8}>
+
+      <Paper
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          pb: "env(safe-area-inset-bottom)",
+        }}
+        elevation={8}
+      >
         <BottomNavigation
           showLabels
           value={currentTab}
           onChange={(_, v) => nav(tabs[v].to)}
-          sx={{ height: 68 }}
+          sx={{ height: 64 }}
         >
           {tabs.map((t) => (
             <BottomNavigationAction key={t.to} label={t.label} icon={t.icon} />
