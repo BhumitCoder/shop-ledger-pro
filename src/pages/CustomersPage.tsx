@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Avatar, Box, Card, CardContent, Fab, IconButton, InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Fab, IconButton, InputAdornment, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
@@ -17,8 +17,13 @@ export default function CustomersPage() {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [q, setQ] = useState("");
   const [openAdd, setOpenAdd] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (user) return subscribeCustomers(user.uid, setCustomers); }, [user]);
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    return subscribeCustomers(user.uid, (rows) => { setCustomers(rows); setLoading(false); });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
