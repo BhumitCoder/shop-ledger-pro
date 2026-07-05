@@ -205,15 +205,15 @@ export default function CustomerLedgerPage() {
         </CardContent>
       </Card>
 
-      {/* PDF share button */}
-      <Button
-        variant="outlined"
-        startIcon={<PictureAsPdfIcon />}
-        onClick={printLedger}
-        size="small"
-      >
-        Share / Print Ledger
-      </Button>
+      {/* PDF share buttons */}
+      <Stack direction="row" spacing={1}>
+        <Button fullWidth variant="outlined" startIcon={<ShareIcon />} onClick={() => generatePdf("share")} size="small" disabled={generatingPdf || rows.length === 0}>
+          {generatingPdf ? "Generating…" : "Share Ledger"}
+        </Button>
+        <Button fullWidth variant="outlined" startIcon={<DownloadIcon />} onClick={() => generatePdf("download")} size="small" disabled={generatingPdf || rows.length === 0}>
+          Download PDF
+        </Button>
+      </Stack>
 
       <Typography variant="subtitle1" fontWeight={700}>Ledger</Typography>
 
