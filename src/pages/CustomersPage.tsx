@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Avatar, Box, Card, CardContent, Fab, IconButton, InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Fab, IconButton, InputAdornment, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
@@ -17,8 +17,13 @@ export default function CustomersPage() {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [q, setQ] = useState("");
   const [openAdd, setOpenAdd] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (user) return subscribeCustomers(user.uid, setCustomers); }, [user]);
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    return subscribeCustomers(user.uid, (rows) => { setCustomers(rows); setLoading(false); });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -55,34 +60,53 @@ export default function CustomersPage() {
       />
 
       <Stack spacing={1}>
-        {filtered.map((c) => {
-          const b = balances[c.id] ?? c.openingBalance ?? 0;
-          return (
-            <Card key={c.id} onClick={() => nav(`/customers/${c.id}`)} sx={{ cursor: "pointer" }}>
+        {loading ? (
+          [1, 2, 3, 4, 5].map((i) => (
+            <Card key={i}>
               <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
                 <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Avatar sx={{ bgcolor: "primary.main" }}>{c.name.charAt(0).toUpperCase()}</Avatar>
-                  <Box flex={1} minWidth={0}>
-                    <Typography fontWeight={600} noWrap>{c.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">{c.phone || "No phone"}</Typography>
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box flex={1}>
+                    <Skeleton width="55%" />
+                    <Skeleton width="35%" />
                   </Box>
-                  <Box textAlign="right">
-                    <Typography fontWeight={700} color={b > 0 ? "success.main" : b < 0 ? "error.main" : "text.secondary"}>
-                      {b === 0 ? "Settled" : fmtMoney(b)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {b > 0 ? "you get" : b < 0 ? "you give" : ""}
-                    </Typography>
-                  </Box>
+                  <Skeleton width={70} />
                 </Stack>
               </CardContent>
             </Card>
-          );
-        })}
-        {filtered.length === 0 && (
-          <Card><CardContent><Typography textAlign="center" color="text.secondary">
-            {q ? "No customers match your search." : "No customers yet. Tap + to add your first."}
-          </Typography></CardContent></Card>
+          ))
+        ) : (
+          <>
+            {filtered.map((c) => {
+              const b = balances[c.id] ?? c.openingBalance ?? 0;
+              return (
+                <Card key={c.id} onClick={() => nav(`/customers/${c.id}`)} sx={{ cursor: "pointer", transition: "transform .15s, box-shadow .15s", "&:active": { transform: "scale(0.99)" }, "&:hover": { boxShadow: 3 } }}>
+                  <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Avatar src={c.photoURL} sx={{ bgcolor: "primary.main" }}>{c.name.charAt(0).toUpperCase()}</Avatar>
+                      <Box flex={1} minWidth={0}>
+                        <Typography fontWeight={600} noWrap>{c.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">{c.phone || "No phone"}</Typography>
+                      </Box>
+                      <Box textAlign="right">
+                        <Typography fontWeight={700} color={b > 0 ? "success.main" : b < 0 ? "error.main" : "text.secondary"}>
+                          {b === 0 ? "Settled" : fmtMoney(Math.abs(b))}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {b > 0 ? "you get" : b < 0 ? "you give" : ""}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {filtered.length === 0 && (
+              <Card><CardContent><Typography textAlign="center" color="text.secondary" py={3}>
+                {q ? "No customers match your search." : "No customers yet. Tap + to add your first."}
+              </Typography></CardContent></Card>
+            )}
+          </>
         )}
       </Stack>
 

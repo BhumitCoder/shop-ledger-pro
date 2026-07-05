@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   AppBar, Box, BottomNavigation, BottomNavigationAction,
-  Container, IconButton, Paper, Toolbar, Typography,
+  Container, Fade, IconButton, LinearProgress, Paper, Toolbar, Typography,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
@@ -12,6 +12,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { useThemeMode } from "@/theme/ThemeModeProvider";
+import { useIsFetching } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 const tabs = [
   { to: "/", label: "Home", icon: <DashboardIcon /> },
@@ -25,6 +27,21 @@ export default function AppLayout() {
   const nav = useNavigate();
   const loc = useLocation();
   const { mode, toggle } = useThemeMode();
+  const fetching = useIsFetching();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Brief top progress bar on every route change (feels snappy).
+  const [routeBusy, setRouteBusy] = useState(false);
+  useEffect(() => {
+    setRouteBusy(true);
+    const t = setTimeout(() => setRouteBusy(false), 350);
+    // scroll to top on navigation
+    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    window.scrollTo({ top: 0 });
+    return () => clearTimeout(t);
+  }, [loc.pathname]);
+
+  const showProgress = routeBusy || fetching > 0;
 
   const currentTab = (() => {
     if (loc.pathname === "/") return 0;
@@ -49,9 +66,18 @@ export default function AppLayout() {
             {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>
         </Toolbar>
+        <Box sx={{ height: 3, position: "relative" }}>
+          {showProgress && (
+            <LinearProgress
+              color="secondary"
+              sx={{ position: "absolute", inset: 0, bgcolor: "transparent" }}
+            />
+          )}
+        </Box>
       </AppBar>
 
       <Container
+        ref={scrollRef}
         maxWidth="sm"
         sx={{
           flex: 1,
@@ -60,7 +86,11 @@ export default function AppLayout() {
           pb: "calc(80px + env(safe-area-inset-bottom))",
         }}
       >
-        <Outlet />
+        <Fade in key={loc.pathname} timeout={220} appear>
+          <Box>
+            <Outlet />
+          </Box>
+        </Fade>
       </Container>
 
       <Paper
