@@ -178,7 +178,8 @@ export default function CustomerLedgerPage() {
         <IconButton onClick={(e) => setMenu(e.currentTarget)}><MoreVertIcon /></IconButton>
         <Menu open={!!menu} anchorEl={menu} onClose={() => setMenu(null)}>
           <MenuItem onClick={() => { setEditOpen(true); setMenu(null); }}>Edit customer</MenuItem>
-          <MenuItem onClick={() => { setMenu(null); printLedger(); }}><PictureAsPdfIcon fontSize="small" sx={{ mr: 1 }} />Print / PDF Ledger</MenuItem>
+          <MenuItem disabled={generatingPdf} onClick={() => { setMenu(null); generatePdf("download"); }}><DownloadIcon fontSize="small" sx={{ mr: 1 }} />Download PDF</MenuItem>
+          <MenuItem disabled={generatingPdf} onClick={() => { setMenu(null); generatePdf("share"); }}><ShareIcon fontSize="small" sx={{ mr: 1 }} />Share PDF</MenuItem>
           <MenuItem onClick={() => { setMenu(null); handleDelete(); }} sx={{ color: "error.main" }}>Delete customer</MenuItem>
         </Menu>
       </Stack>
