@@ -21,6 +21,9 @@ import { TransactionFormDialog } from "@/components/TransactionFormDialog";
 import { CustomerFormDialog } from "@/components/CustomerFormDialog";
 import { useSnackbar } from "notistack";
 import { uploadCustomerPhoto } from "@/lib/storage";
+import { buildLedgerPdf, shareOrDownloadPdf } from "@/lib/pdf";
+import ShareIcon from "@mui/icons-material/Share";
+import DownloadIcon from "@mui/icons-material/Download";
 
 export default function CustomerLedgerPage() {
   const { id } = useParams();
