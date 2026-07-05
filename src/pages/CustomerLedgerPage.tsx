@@ -21,6 +21,9 @@ import { TransactionFormDialog } from "@/components/TransactionFormDialog";
 import { CustomerFormDialog } from "@/components/CustomerFormDialog";
 import { useSnackbar } from "notistack";
 import { uploadCustomerPhoto } from "@/lib/storage";
+import { buildLedgerPdf, shareOrDownloadPdf } from "@/lib/pdf";
+import ShareIcon from "@mui/icons-material/Share";
+import DownloadIcon from "@mui/icons-material/Download";
 
 export default function CustomerLedgerPage() {
   const { id } = useParams();
@@ -88,69 +91,45 @@ export default function CustomerLedgerPage() {
     }
   };
 
-  const printLedger = () => {
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const generatePdf = async (action: "share" | "download") => {
     if (!customer) return;
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Ledger — ${customer.name}</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 24px; color: #111; font-size: 13px; }
-  h1 { color: #1976d2; margin-bottom: 4px; }
-  .subtitle { color: #666; margin-bottom: 16px; font-size: 12px; }
-  .summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat { background: #f5f5f5; padding: 10px 16px; border-radius: 8px; }
-  .stat-label { font-size: 11px; color: #666; }
-  .stat-value { font-size: 18px; font-weight: 800; margin-top: 2px; }
-  .green { color: #2e7d32; } .red { color: #c62828; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  th { background: #1976d2; color: white; padding: 8px; text-align: left; font-size: 12px; }
-  td { padding: 7px 8px; border-bottom: 1px solid #eee; font-size: 12px; }
-  tr:nth-child(even) { background: #fafafa; }
-  @media print { body { margin: 12px; } }
-</style>
-</head>
-<body>
-<h1>Customer Ledger</h1>
-<div class="subtitle">
-  Customer: <strong>${customer.name}</strong>
-  ${customer.phone ? ` &nbsp;·&nbsp; Phone: ${customer.phone}` : ""}
-  &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString("en-IN")}
-</div>
-<div class="summary">
-  <div class="stat">
-    <div class="stat-label">Balance</div>
-    <div class="stat-value ${balance > 0 ? "green" : balance < 0 ? "red" : ""}">
-      ${balance === 0 ? "Settled" : (balance > 0 ? "Will Get " : "Will Give ") + "₹" + Math.abs(balance).toLocaleString("en-IN")}
-    </div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">Total Credit</div>
-    <div class="stat-value red">₹${totalCredit.toLocaleString("en-IN")}</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">Total Paid</div>
-    <div class="stat-value green">₹${totalPaid.toLocaleString("en-IN")}</div>
-  </div>
-</div>
-<table>
-  <tr><th>Date</th><th>Details</th><th>Method</th><th>Credit (You Gave)</th><th>Payment (You Got)</th><th>Balance</th></tr>
-  ${rows.map((t) => `
-  <tr>
-    <td>${fmtDate(t.date)}</td>
-    <td>${t.description || (t.type === "credit" ? "Credit given" : "Payment received")}</td>
-    <td>${t.paymentMethod || "cash"}</td>
-    <td style="color:#c62828">${t.type === "credit" ? "₹" + t.amount.toLocaleString("en-IN") : ""}</td>
-    <td style="color:#2e7d32">${t.type === "payment" ? "₹" + t.amount.toLocaleString("en-IN") : ""}</td>
-    <td><strong>₹${Math.abs((t as any).running).toLocaleString("en-IN")} ${(t as any).running > 0 ? "Dr" : (t as any).running < 0 ? "Cr" : ""}</strong></td>
-  </tr>`).join("")}
-</table>
-</body>
-</html>`;
-    const win = window.open("", "_blank");
-    if (win) { win.document.write(html); win.document.close(); win.print(); }
+    if (generatingPdf) return;
+    if (!customer.name?.trim()) {
+      enqueueSnackbar("Customer name missing", { variant: "warning" });
+      return;
+    }
+    if (rows.length === 0) {
+      enqueueSnackbar("No entries to export yet", { variant: "info" });
+      return;
+    }
+    setGeneratingPdf(true);
+    try {
+      const doc = buildLedgerPdf({
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        balance,
+        totalCredit,
+        totalPaid,
+        rows: rows.slice().reverse() as any, // chronological order in PDF
+      });
+      const safeName = customer.name.replace(/[^a-z0-9]+/gi, "_").slice(0, 40) || "customer";
+      const filename = `Ledger_${safeName}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      if (action === "share") {
+        const result = await shareOrDownloadPdf(doc, filename, `Ledger — ${customer.name}`);
+        enqueueSnackbar(result === "shared" ? "Ready to share" : "Sharing not supported — downloaded instead", { variant: "success" });
+      } else {
+        doc.save(filename);
+        enqueueSnackbar("PDF downloaded", { variant: "success" });
+      }
+    } catch (e: any) {
+      enqueueSnackbar(e?.message || "Failed to generate PDF", { variant: "error" });
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
+
 
   if (!customer) {
     return (
@@ -199,7 +178,8 @@ export default function CustomerLedgerPage() {
         <IconButton onClick={(e) => setMenu(e.currentTarget)}><MoreVertIcon /></IconButton>
         <Menu open={!!menu} anchorEl={menu} onClose={() => setMenu(null)}>
           <MenuItem onClick={() => { setEditOpen(true); setMenu(null); }}>Edit customer</MenuItem>
-          <MenuItem onClick={() => { setMenu(null); printLedger(); }}><PictureAsPdfIcon fontSize="small" sx={{ mr: 1 }} />Print / PDF Ledger</MenuItem>
+          <MenuItem disabled={generatingPdf} onClick={() => { setMenu(null); generatePdf("download"); }}><DownloadIcon fontSize="small" sx={{ mr: 1 }} />Download PDF</MenuItem>
+          <MenuItem disabled={generatingPdf} onClick={() => { setMenu(null); generatePdf("share"); }}><ShareIcon fontSize="small" sx={{ mr: 1 }} />Share PDF</MenuItem>
           <MenuItem onClick={() => { setMenu(null); handleDelete(); }} sx={{ color: "error.main" }}>Delete customer</MenuItem>
         </Menu>
       </Stack>
@@ -225,15 +205,15 @@ export default function CustomerLedgerPage() {
         </CardContent>
       </Card>
 
-      {/* PDF share button */}
-      <Button
-        variant="outlined"
-        startIcon={<PictureAsPdfIcon />}
-        onClick={printLedger}
-        size="small"
-      >
-        Share / Print Ledger
-      </Button>
+      {/* PDF share buttons */}
+      <Stack direction="row" spacing={1}>
+        <Button fullWidth variant="outlined" startIcon={<ShareIcon />} onClick={() => generatePdf("share")} size="small" disabled={generatingPdf || rows.length === 0}>
+          {generatingPdf ? "Generating…" : "Share Ledger"}
+        </Button>
+        <Button fullWidth variant="outlined" startIcon={<DownloadIcon />} onClick={() => generatePdf("download")} size="small" disabled={generatingPdf || rows.length === 0}>
+          Download PDF
+        </Button>
+      </Stack>
 
       <Typography variant="subtitle1" fontWeight={700}>Ledger</Typography>
 
