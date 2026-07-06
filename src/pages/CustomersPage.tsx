@@ -110,7 +110,7 @@ export default function CustomersPage() {
         )}
       </Stack>
 
-      <Fab color="primary" onClick={() => setOpenAdd(true)} sx={{ position: "fixed", right: 20, bottom: 88, zIndex: 20 }} aria-label="add customer">
+      <Fab color="primary" onClick={() => setOpenAdd(true)} sx={{ position: "fixed", right: 20, bottom: "calc(64px + env(safe-area-inset-bottom) + 16px)", zIndex: 20 }} aria-label="add customer">
         <AddIcon />
       </Fab>
 

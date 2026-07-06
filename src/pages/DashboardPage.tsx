@@ -121,7 +121,7 @@ export default function DashboardPage() {
           <Button variant="outlined" size="small" color="error" startIcon={<AddIcon />} onClick={() => nav("/expenses")} sx={{ flex: 1 }}>
             Expense
           </Button>
-          <Button variant="outlined" size="small" color="success" startIcon={<AddIcon />} onClick={() => nav("/expenses")} sx={{ flex: 1 }}>
+          <Button variant="outlined" size="small" color="success" startIcon={<AddIcon />} onClick={() => nav("/expenses", { state: { openIncome: true } })} sx={{ flex: 1 }}>
             Income
           </Button>
         </Stack>

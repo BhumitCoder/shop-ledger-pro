@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box, Button, Card, CardContent, Chip, Fab, MenuItem, Skeleton, Stack,
   Tab, Tabs, TextField, Typography, IconButton,
@@ -10,15 +10,27 @@ import { Expense, Income, deleteExpense, deleteIncome, subscribeExpenses, subscr
 import { fmtDate, fmtMoney } from "@/lib/format";
 import { ExpenseFormDialog } from "@/components/ExpenseFormDialog";
 import { useSnackbar } from "notistack";
+import { useLocation } from "react-router-dom";
 
 export default function ExpensesPage() {
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const location = useLocation();
   const [tab, setTab] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogMode, setDialogMode] = useState<"expense" | "income" | null>(null);
+
+  // Auto-open income dialog when navigated here from Dashboard "Income" quick action
+  const handledState = useRef(false);
+  useEffect(() => {
+    if (!handledState.current && (location.state as any)?.openIncome) {
+      handledState.current = true;
+      setTab(1);
+      setDialogMode("income");
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!user) return;
@@ -154,7 +166,7 @@ export default function ExpensesPage() {
       <Fab
         color={tab === 0 ? "error" : "success"}
         onClick={() => setDialogMode(tab === 0 ? "expense" : "income")}
-        sx={{ position: "fixed", right: 20, bottom: 88, zIndex: 20 }}
+        sx={{ position: "fixed", right: 20, bottom: "calc(64px + env(safe-area-inset-bottom) + 16px)", zIndex: 20 }}
         aria-label="add"
       >
         <AddIcon />

@@ -10,6 +10,7 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import EditIcon from "@mui/icons-material/Edit";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   Customer, Transaction, computeBalance, customerDoc,
@@ -36,6 +37,7 @@ export default function CustomerLedgerPage() {
   const [txns, setTxns] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [txnType, setTxnType] = useState<"credit" | "payment" | null>(null);
+  const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [menu, setMenu] = useState<null | HTMLElement>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -252,11 +254,14 @@ export default function CustomerLedgerPage() {
                   </Box>
                 )}
                 <Divider sx={{ my: 1 }} />
-                <Button size="small" color="error" onClick={async () => {
-                  if (!user || !confirm("Delete this entry?")) return;
-                  try { await deleteTransaction(user.uid, customer.id, t.id); enqueueSnackbar("Entry deleted", { variant: "success" }); }
-                  catch (e: any) { enqueueSnackbar(e?.message, { variant: "error" }); }
-                }}>Delete</Button>
+                <Stack direction="row" spacing={1}>
+                  <Button size="small" startIcon={<EditIcon />} onClick={() => setEditTxn(t)}>Edit</Button>
+                  <Button size="small" color="error" onClick={async () => {
+                    if (!user || !confirm("Delete this entry?")) return;
+                    try { await deleteTransaction(user.uid, customer.id, t.id); enqueueSnackbar("Entry deleted", { variant: "success" }); }
+                    catch (e: any) { enqueueSnackbar(e?.message, { variant: "error" }); }
+                  }}>Delete</Button>
+                </Stack>
               </CardContent>
             </Card>
           ))}
@@ -288,7 +293,21 @@ export default function CustomerLedgerPage() {
       {/* Spacer so last card isn't hidden behind both fixed bars */}
       <Box sx={{ height: "calc(80px + 64px + env(safe-area-inset-bottom))" }} />
 
-      <TransactionFormDialog open={!!txnType} onClose={() => setTxnType(null)} customerId={customer.id} type={txnType || "credit"} />
+      {/* Add new transaction */}
+      <TransactionFormDialog
+        open={!!txnType}
+        onClose={() => setTxnType(null)}
+        customerId={customer.id}
+        type={txnType || "credit"}
+      />
+      {/* Edit existing transaction */}
+      <TransactionFormDialog
+        open={!!editTxn}
+        onClose={() => setEditTxn(null)}
+        customerId={customer.id}
+        type={editTxn?.type || "credit"}
+        transaction={editTxn}
+      />
       <CustomerFormDialog open={editOpen} onClose={() => setEditOpen(false)} customer={customer} />
     </Stack>
   );
