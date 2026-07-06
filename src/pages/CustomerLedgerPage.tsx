@@ -263,8 +263,18 @@ export default function CustomerLedgerPage() {
         </Stack>
       )}
 
-      {/* Fixed bottom bar */}
-      <Box sx={{ position: "fixed", left: 0, right: 0, bottom: 68, zIndex: 15, p: 1.5, bgcolor: "background.paper", borderTop: 1, borderColor: "divider" }}>
+      {/* Fixed bottom bar — sits on top of the bottom nav bar */}
+      <Box sx={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: "calc(64px + env(safe-area-inset-bottom))",
+        zIndex: 15,
+        p: 1.5,
+        bgcolor: "background.paper",
+        borderTop: 1,
+        borderColor: "divider",
+      }}>
         <Stack direction="row" spacing={1} maxWidth="sm" mx="auto">
           <Button fullWidth size="large" variant="contained" color="error" onClick={() => setTxnType("credit")}>
             You gave ₹
@@ -274,6 +284,9 @@ export default function CustomerLedgerPage() {
           </Button>
         </Stack>
       </Box>
+
+      {/* Spacer so last card isn't hidden behind both fixed bars */}
+      <Box sx={{ height: "calc(80px + 64px + env(safe-area-inset-bottom))" }} />
 
       <TransactionFormDialog open={!!txnType} onClose={() => setTxnType(null)} customerId={customer.id} type={txnType || "credit"} />
       <CustomerFormDialog open={editOpen} onClose={() => setEditOpen(false)} customer={customer} />
