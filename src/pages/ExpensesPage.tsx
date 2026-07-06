@@ -154,19 +154,13 @@ export default function ExpensesPage() {
         </Stack>
       )}
 
-      <Button
-        variant="outlined"
-        size="large"
-        onClick={() => setDialogMode(tab === 0 ? "expense" : "income")}
-        sx={{ mb: 2 }}
-      >
-        {tab === 0 ? "+ Add Expense" : "+ Add Income"}
-      </Button>
+      {/* Spacer so last card clears the FAB */}
+      <Box sx={{ height: 80 }} />
 
       <Fab
         color={tab === 0 ? "error" : "success"}
         onClick={() => setDialogMode(tab === 0 ? "expense" : "income")}
-        sx={{ position: "fixed", right: 20, bottom: "calc(64px + env(safe-area-inset-bottom) + 16px)", zIndex: 20 }}
+        sx={{ position: "fixed", right: 20, bottom: "calc(64px + env(safe-area-inset-bottom) + 28px)", zIndex: 20 }}
         aria-label="add"
       >
         <AddIcon />
