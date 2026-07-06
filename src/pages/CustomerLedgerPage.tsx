@@ -137,11 +137,21 @@ export default function CustomerLedgerPage() {
     return (
       <Stack spacing={2}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Skeleton variant="circular" width={40} height={40} />
-          <Box flex={1}><Skeleton width="60%" /><Skeleton width="40%" /></Box>
+          <Skeleton animation="wave" variant="circular" width={44} height={44} />
+          <Box flex={1}>
+            <Skeleton animation="wave" width="55%" height={20} />
+            <Skeleton animation="wave" width="38%" height={14} sx={{ mt: 0.5 }} />
+          </Box>
+          <Skeleton animation="wave" variant="circular" width={36} height={36} />
+          <Skeleton animation="wave" variant="circular" width={36} height={36} />
         </Stack>
-        <Skeleton variant="rounded" height={100} />
-        {[1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={80} />)}
+        <Skeleton animation="wave" variant="rounded" height={108} />
+        <Stack direction="row" spacing={1}>
+          <Skeleton animation="wave" variant="rounded" height={36} sx={{ flex: 1 }} />
+          <Skeleton animation="wave" variant="rounded" height={36} sx={{ flex: 1 }} />
+        </Stack>
+        <Skeleton animation="wave" width={60} height={20} />
+        {[1, 2, 3].map((i) => <Skeleton animation="wave" key={i} variant="rounded" height={90} />)}
       </Stack>
     );
   }
@@ -221,7 +231,7 @@ export default function CustomerLedgerPage() {
 
       {/* Transactions */}
       {loading ? (
-        <Stack spacing={1}>{[1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={88} />)}</Stack>
+        <Stack spacing={1}>{[1, 2, 3].map((i) => <Skeleton animation="wave" key={i} variant="rounded" height={90} />)}</Stack>
       ) : (
         <Stack spacing={1}>
           {rows.length === 0 && (

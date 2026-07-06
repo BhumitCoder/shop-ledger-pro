@@ -202,7 +202,19 @@ ${filteredIncome.length > 0 ? `
       </TextField>
 
       {loading ? (
-        <Stack spacing={1}>{[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} variant="rounded" height={72} />)}</Stack>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                <Skeleton animation="wave" width="60%" height={16} sx={{ mb: 0.5 }} />
+                <Skeleton animation="wave" width="75%" height={28} />
+              </CardContent>
+            </Card>
+          ))}
+          <Box sx={{ gridColumn: "1 / -1" }}>
+            <Skeleton animation="wave" variant="rounded" height={72} />
+          </Box>
+        </Box>
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
           {statCard("Money Received", fmtMoney(got), "success.main")}

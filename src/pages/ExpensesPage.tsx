@@ -90,7 +90,7 @@ export default function ExpensesPage() {
 
       {loading ? (
         <Stack spacing={1}>
-          {[1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={72} />)}
+          {[1, 2, 3].map((i) => <Skeleton animation="wave" key={i} variant="rounded" height={72} />)}
         </Stack>
       ) : tab === 0 ? (
         <Stack spacing={1}>

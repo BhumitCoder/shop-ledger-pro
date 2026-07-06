@@ -86,7 +86,7 @@ export default function AppLayout() {
           pb: "calc(80px + env(safe-area-inset-bottom))",
         }}
       >
-        <Fade in key={loc.pathname} timeout={220} appear>
+        <Fade in key={loc.pathname} timeout={200} appear>
           <Box>
             <Outlet />
           </Box>
