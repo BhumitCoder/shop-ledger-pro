@@ -60,6 +60,17 @@ export interface BusinessProfile {
   address: string;
 }
 
+// Firestore ties same-day entries only by `date` (which is often midnight-only),
+// so newly added same-day entries can sort arbitrarily. Break ties with `createdAt`
+// (server timestamp) so the most recently added entry always shows first.
+function sortByDateThenCreatedAt<T extends { date: Timestamp; createdAt?: Timestamp }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => {
+    const dateDiff = b.date.toMillis() - a.date.toMillis();
+    if (dateDiff !== 0) return dateDiff;
+    return (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0);
+  });
+}
+
 // ─── Refs ────────────────────────────────────────────────────────────────────
 export const customersRef = (uid: string) => collection(db, "users", uid, "customers");
 export const customerDoc = (uid: string, id: string) => doc(db, "users", uid, "customers", id);
@@ -89,7 +100,7 @@ export async function deleteCustomer(uid: string, id: string) {
 // ─── Transactions ────────────────────────────────────────────────────────────
 export function subscribeTransactions(uid: string, customerId: string, cb: (rows: Transaction[]) => void) {
   const q = query(txnsRef(uid, customerId), orderBy("date", "desc"));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, customerId, ...(d.data() as any) }))));
+  return onSnapshot(q, (snap) => cb(sortByDateThenCreatedAt(snap.docs.map((d) => ({ id: d.id, customerId, ...(d.data() as any) })))));
 }
 export async function createTransaction(uid: string, customerId: string, data: Omit<Transaction, "id" | "customerId" | "createdAt">) {
   return addDoc(txnsRef(uid, customerId), { ...data, createdAt: serverTimestamp() });
@@ -104,7 +115,7 @@ export async function deleteTransaction(uid: string, customerId: string, id: str
 // ─── Expenses ────────────────────────────────────────────────────────────────
 export function subscribeExpenses(uid: string, cb: (rows: Expense[]) => void) {
   const q = query(expensesRef(uid), orderBy("date", "desc"));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))));
+  return onSnapshot(q, (snap) => cb(sortByDateThenCreatedAt(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })))));
 }
 export async function createExpense(uid: string, data: Omit<Expense, "id" | "createdAt">) {
   return addDoc(expensesRef(uid), { ...data, createdAt: serverTimestamp() });
@@ -116,7 +127,7 @@ export async function deleteExpense(uid: string, id: string) {
 // ─── Income ──────────────────────────────────────────────────────────────────
 export function subscribeIncome(uid: string, cb: (rows: Income[]) => void) {
   const q = query(incomeRef(uid), orderBy("date", "desc"));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))));
+  return onSnapshot(q, (snap) => cb(sortByDateThenCreatedAt(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })))));
 }
 export async function createIncome(uid: string, data: Omit<Income, "id" | "createdAt">) {
   return addDoc(incomeRef(uid), { ...data, createdAt: serverTimestamp() });
